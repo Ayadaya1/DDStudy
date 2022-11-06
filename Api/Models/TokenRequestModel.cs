@@ -2,22 +2,13 @@
 {
     public class TokenRequestModel
     {
-        public string Login { get; set; }
-        public string Password { get; set; }
+        public string Login { get; set; } = null!;
+        public string Password { get; set; } = null!;
 
-        public TokenRequestModel(string login, string password)
-        {
-            Login = login;
-            Password = password;
-        }
     }
 
     public class RefreshTokenRequestModel
     {
-        public string RefreshToken { get; set; }
-        public RefreshTokenRequestModel(string refreshToken)
-        {
-            RefreshToken = refreshToken;
-        }
+        public string RefreshToken { get; set; } = null!; 
     }
 }

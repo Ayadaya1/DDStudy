@@ -13,5 +13,7 @@ namespace DAL.Entities
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public DateTimeOffset BirthDate { get; set; }
+
+        public virtual ICollection<UserSession>? Sessions { get; set; }
     }
 }

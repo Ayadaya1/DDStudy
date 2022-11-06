@@ -25,7 +25,10 @@ namespace Api.Controllers
         [HttpPost]
         public async Task CreateUser(CreateUserModel model)
         {
+            if (await _userService.CheckUserExists(model.Email))
+                throw new Exception("User already exists");
             await _userService.CreateUser(model);
+            
         }
         
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 using static System.Net.WebRequestMethods;
 
 namespace Api.Controllers
@@ -26,18 +27,16 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task AddPost([FromForm]List<IFormFile> files, string text)
+        public async Task AddPost(List<MetadataModel>meta, string text)
         {
             var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
             if (Guid.TryParse(userIdString, out var userId))
             {
-                var user =  await _userService.GetUser(userId);
-                if (user!=null)
+                var user = await _userService.GetUser(userId);
+                if (user != null)
                 {
-                    var meta = new List<MetadataModel>();
-                    foreach (IFormFile file in files)
+                    foreach (MetadataModel model in meta)
                     {
-                        var model = await _attachService.LoadFile(file);
                         var tempFi = new FileInfo(Path.Combine(Path.GetTempPath(), model.TempId.ToString()));
                         if (!tempFi.Exists)
                         {
@@ -53,11 +52,34 @@ namespace Api.Controllers
                             if (path != null)
                             {
                                 System.IO.File.Copy(tempFi.FullName, path, true);
-                                meta.Add(model);
                             }
                         }
                     }
-                    await _postService.CreatePost(meta,userId, text);
+                    await _postService.CreatePost(meta, userId, text);
+                }
+            }
+            else
+                throw new Exception("You are not authorized");
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task AddPostWithNewFiles([FromForm]List<IFormFile> files, string text)
+        {
+            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                var user =  await _userService.GetUser(userId);
+                if (user!=null)
+                {
+                    var meta = new List<MetadataModel>();
+                    foreach (IFormFile file in files)
+                    {
+                        var model = await _attachService.LoadFile(file);
+                        meta.Add(model);
+                    }
+
+                    await AddPost(meta, text);
                 }
             }
             else

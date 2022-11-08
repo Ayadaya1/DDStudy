@@ -28,9 +28,9 @@ namespace Api.Controllers
             if (await _userService.CheckUserExists(model.Email))
                 throw new Exception("User already exists");
             await _userService.CreateUser(model);
-            
+
         }
-        
+
 
         [HttpGet]
         [Authorize]
@@ -39,7 +39,7 @@ namespace Api.Controllers
         [Authorize]
         public async Task<UserModel> GetCurrentUser()
         {
-            var userIdString = User.Claims.FirstOrDefault(x=>x.Type == "id")?.Value;
+            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
             if (Guid.TryParse(userIdString, out var userId))
             {
                 return await _userService.GetUser(userId);
@@ -54,6 +54,59 @@ namespace Api.Controllers
         {
             var user = await GetCurrentUser();
             await _userService.ChangePassword(model.NewPassword, user);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task AddAvatarToUser(MetadataModel model)
+        {
+            var user = await GetCurrentUser();
+            var tempFi = new FileInfo(Path.Combine(Path.GetTempPath(), model.TempId.ToString()));
+            if (!tempFi.Exists)
+            {
+                throw new Exception("File not found!");
+            }
+            else
+            {
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "Attaches", model.TempId.ToString());
+                var destFi = new FileInfo(path);
+                if (destFi.Directory != null&& !destFi.Directory.Exists)
+                    destFi.Directory.Create();
+
+                if (path != null)
+                {
+                    System.IO.File.Copy(tempFi.FullName, path, true);
+
+                    await _userService.AddAvatarToUser(user.Id, model, path);
+                }
+
+            }
+        }
+
+        [HttpGet]
+        public async Task<FileResult> GetUserAvatar(Guid userId)
+        {
+            var attach = await _userService.GetUserAvatar(userId);
+            if(attach== null)
+            {
+                throw new Exception("No avatar");
+            }    
+            return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype);
+        }
+
+        [HttpGet]
+        public async Task<FileResult> DownloadAvatar(Guid userId)
+        {
+            var attach = await _userService.GetUserAvatar(userId);
+
+            HttpContext.Response.ContentType = attach.Mimetype;
+            FileContentResult result = new FileContentResult(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype)
+            {
+                FileDownloadName = attach.Name
+            };
+            
+
+            return result;
         }
     }
 }

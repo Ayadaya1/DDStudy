@@ -2,16 +2,13 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Common;
-using System;
 using DAL;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Api.Configs;
 using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
-using System.Data;
 using DAL.Entities;
 
 namespace Api.Services
@@ -77,7 +74,8 @@ namespace Api.Services
         public async Task<UserModel> GetUser(Guid id)
         {
             var user = await GetUserById(id);
-
+           // if (user.Posts.Count == 0)
+                //throw new Exception("No posts...");
             return _mapper.Map<UserModel>(user);
         }
         private async Task<DAL.Entities.User> GetUserByCredentials(string login, string password)
@@ -197,5 +195,43 @@ namespace Api.Services
                 throw new SecurityTokenException("Invalid token");
             }
         }
+
+        public async Task AddAvatarToUser(Guid userId, MetadataModel meta, string filePath)
+        {
+            var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
+            {
+                throw new Exception("The user is null");
+            }
+            else
+            {
+                var avatar = new Avatar
+                {
+                    //Id = Guid.NewGuid(),
+                    Author = user,
+                    Mimetype = meta.MimeType,
+                    Name = meta.Name,
+                    Size = meta.Size,
+                    FilePath = filePath
+                };
+                user.Avatar = avatar;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<AttachModel> GetUserAvatar(Guid userId)
+        {
+            var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(x => x.Id == userId);
+            if (user != null)
+            {
+                var attach = _mapper.Map<AttachModel>(user.Avatar);
+                return attach;
+            }
+            else
+            {
+                throw new Exception("User is null");
+            }
+        }
+
     }
 }

@@ -13,6 +13,12 @@ namespace Api
                 .ForMember(d=>d.BirthDate, m=>m.MapFrom(s=>s.BirthDate.UtcDateTime));
 
             CreateMap<DAL.Entities.User, Models.UserModel>();
+
+            CreateMap<DAL.Entities.Avatar, Models.AttachModel>();
+
+            CreateMap<DAL.Entities.PostAttach, Models.AttachModel>();
+
+            CreateMap<DAL.Entities.Post, Models.PostModel>();
         }
     }
 }

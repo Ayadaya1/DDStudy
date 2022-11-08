@@ -57,6 +57,10 @@ builder.Services.AddAutoMapper(typeof(MapperProfile).Assembly);
 
 builder.Services.AddScoped<UserService>();
 
+builder.Services.AddTransient<PostService>();
+
+builder.Services.AddScoped<AttachService>();
+
 builder.Services.AddAuthentication(o =>
 {
     o.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;

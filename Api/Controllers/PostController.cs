@@ -99,5 +99,39 @@ namespace Api.Controllers
 
             return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype);
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task AddCommentToPost(Guid postId, CommentInputModel model)
+        {
+            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                await _postService.AddComment(model, userId, postId);
+            }
+            else
+                throw new Exception("You are not authorized");
+        }
+
+        [HttpGet]
+        public async Task<List<CommentOutputModel>> GetAllComments(Guid postId)
+        {
+            var post = await _postService.GetPostById(postId);
+
+            var comments = new List<CommentOutputModel>();
+
+            foreach(var comment in post.Comments)
+            {
+                var model = new CommentOutputModel
+                {
+                    Created = comment.Created,
+                    AuthorName = comment.User.Name,
+                    Text = comment.Text
+                };
+                comments.Add(model);
+            }
+
+            return comments;
+        }
     }
 }

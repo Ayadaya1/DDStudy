@@ -52,7 +52,7 @@ namespace Api.Services
 
         public async Task<Post> GetPostById(Guid id)
         {
-            var post = await _context.Posts.Include(x=>x.User).Include(x=>x.Attaches).FirstOrDefaultAsync(x => x.Id == id);
+            var post = await _context.Posts.Include(x=>x.User).Include(x=>x.Attaches).Include(x=>x.Comments).FirstOrDefaultAsync(x => x.Id == id);
             if(post== null)
             {
                 throw new Exception("Post not found");
@@ -64,6 +64,32 @@ namespace Api.Services
         {
             var attach = await _context.PostAttaches.FirstOrDefaultAsync(x => x.Id == id);
             return _mapper.Map<AttachModel>(attach);
+        }
+
+        public async Task AddComment(CommentInputModel model, Guid userId, Guid postId)
+        {
+            var post = await _context.Posts.Include(x => x.Comments).ThenInclude(x => x.User).FirstOrDefaultAsync(x => x.Id == postId);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if(user==null)
+            {
+                throw new Exception("User is null");
+            }
+            if(post==null)
+            {
+                throw new Exception("Post is null");
+            }
+            var comment = new Comment
+            {
+                Text = model.Text,
+                Created = DateTime.UtcNow,
+                Id = Guid.NewGuid(),
+                User = user
+            };
+            if(post!=null)
+                post.Comments.Add(comment);
+            await _context.Comments.AddAsync(comment);
+            await _context.SaveChangesAsync();
+
         }
     }
 }

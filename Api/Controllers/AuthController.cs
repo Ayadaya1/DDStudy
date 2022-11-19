@@ -16,7 +16,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<TokenModel> Token(TokenRequestModel model) => await _userService.GetToken(model.Login,model.Password);
+        public async Task<TokenModel> Token(TokenRequestModel model) => await _userService.GetToken(model.Login, model.Password);
 
         [HttpPost]
         public async Task<TokenModel> RefreshToken(RefreshTokenRequestModel model) => await _userService.GetTokenByRefreshToken(model.RefreshToken);

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using static System.Net.WebRequestMethods;
+using Common.Extentions;
 
 namespace Api.Controllers
 {
@@ -23,6 +24,15 @@ namespace Api.Controllers
             _userService = userService;
             _postService = postService;
             _attachService = attachService;
+            _postService.SetLinkGenerator(_contentLinkGenerator);
+        }
+
+        private string? _contentLinkGenerator(Guid postAttachId)
+        {
+            return Url.ControllerAction<PostController>(nameof(PostController.GetPostContent), new
+            {
+                postAttachId
+            });
         }
 
         [Authorize]
@@ -101,9 +111,7 @@ namespace Api.Controllers
             };
             foreach (var attach in post.Attaches)
             {
-                var path = "api/Post/GetPostContent?postAttachId=";
-                path+=attach.Id.ToString();
-
+                var path = _postService.FixContent(attach);
                 model.Attaches.Add(path);
             }
             return model;

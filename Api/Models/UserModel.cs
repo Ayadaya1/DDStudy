@@ -7,5 +7,8 @@
         public string Email { get; set; } = null!;
         public DateTimeOffset BirthDate { get; set; }
 
+        public int subscriberCount { get; set; }
+        public int subscriptionCount { get; set; }
+
     }
 }

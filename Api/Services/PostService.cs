@@ -11,10 +11,17 @@ namespace Api.Services
         private readonly IMapper _mapper;
         private readonly DAL.DataContext _context;
 
+        private Func<Guid, string?>? _contentLinkGenerator;
+
         public PostService(IMapper mapper, DataContext context)
         {
             _mapper = mapper;
             _context = context;
+        }
+
+        public void SetLinkGenerator(Func<Guid, string?> contentLinkGenerator)
+        {
+            _contentLinkGenerator = contentLinkGenerator;
         }
 
         public async Task CreatePost(List<MetadataModel>attaches, Guid userId, string text)
@@ -90,6 +97,11 @@ namespace Api.Services
             await _context.Comments.AddAsync(comment);
             await _context.SaveChangesAsync();
 
+        }
+
+        public string? FixContent(PostAttach s)
+        {
+            return _contentLinkGenerator?.Invoke(s.Id);
         }
     }
 }

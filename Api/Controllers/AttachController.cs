@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Api.Models;
 using Api.Services;
@@ -11,12 +10,13 @@ namespace Api.Controllers
     public class AttachController : ControllerBase
     {
         private readonly AttachService _attachService;
+        private readonly UserService _userService;
 
-        public AttachController(AttachService attachService)
+        public AttachController(AttachService attachService, UserService userService)
         {
             _attachService = attachService;
+            _userService = userService;
         }
-
         [HttpPost]
         [Authorize]
         public async Task <List<MetadataModel>> UploadFiles([FromForm]List<IFormFile> files)

@@ -120,7 +120,6 @@ namespace Api.Services
                 signingCredentials: new SigningCredentials(_config.SymmetricSecurityKey(), SecurityAlgorithms.HmacSha256)
                 );
             var encodedRefresh = new JwtSecurityTokenHandler().WriteToken(refresh);
-
             return new TokenModel
             {
                 AccessToken = encodedJwt,
@@ -233,6 +232,30 @@ namespace Api.Services
             }
         }
 
-        
+        public async Task Subscribe(Guid subscriberId, Guid targetId)
+        {
+            var subscriber = await _context.Users.Include(x => x.Subscriptions).FirstOrDefaultAsync(x => x.Id == subscriberId);
+            var target = await _context.Users.Include(x => x.Subscribers).ThenInclude(y => y.Subscriber).FirstOrDefaultAsync(x => x.Id == targetId);
+            if (target != null && subscriber != null)
+            {
+                if (target.Subscribers.FirstOrDefault(x => x.Subscriber.Id == subscriber.Id) == null)
+                {
+                    var subscription = new Subscription
+                    {
+                        Id = Guid.NewGuid(),
+                        Subscriber = subscriber,
+                        Target = target
+                    };
+                    target.Subscribers.Add(subscription);
+                    subscriber.Subscriptions.Add(subscription);
+                    await _context.Subscriptions.AddAsync(subscription);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                    throw new Exception("Already subscribed to this user");
+            }
+            else
+                throw new Exception("One of the users could't be found");
+        }
     }
 }

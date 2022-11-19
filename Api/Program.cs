@@ -61,6 +61,8 @@ builder.Services.AddScoped<PostService>();
 
 builder.Services.AddTransient<AttachService>();
 
+builder.Services.AddScoped<SubscriptionService>();
+
 builder.Services.AddAuthentication(o =>
 {
     o.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;

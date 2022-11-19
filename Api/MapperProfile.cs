@@ -12,7 +12,9 @@ namespace Api
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)))
                 .ForMember(d=>d.BirthDate, m=>m.MapFrom(s=>s.BirthDate.UtcDateTime));
 
-            CreateMap<DAL.Entities.User, Models.UserModel>();
+            CreateMap<DAL.Entities.User, Models.UserModel>()
+                .ForMember(d=>d.subscriptionCount, m=>m.MapFrom(s=>s.Subscriptions.Count))
+                .ForMember(d=>d.subscriberCount, m=>m.MapFrom(s=>s.Subscribers.Count));
 
             CreateMap<DAL.Entities.Avatar, Models.AttachModel>();
 

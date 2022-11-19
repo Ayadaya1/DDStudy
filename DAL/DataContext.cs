@@ -27,6 +27,7 @@ namespace DAL
             modelBuilder.
                 Entity<PostAttach>().
                 ToTable(nameof(PostAttaches));
+            modelBuilder.Entity<User>().HasMany(u => u.Subscriptions).WithOne(s => s.Subscriber);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
@@ -39,5 +40,6 @@ namespace DAL
         public DbSet<PostAttach> PostAttaches => Set<PostAttach>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<Subscription> Subscriptions =>Set<Subscription>();
     }
 }

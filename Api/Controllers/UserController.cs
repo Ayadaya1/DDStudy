@@ -108,5 +108,23 @@ namespace Api.Controllers
 
             return result;
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task SubscribeToUser(SubscriptionModel model)
+        {
+            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                if (model.TargetId != userId)
+                    await _userService.Subscribe(userId, model.TargetId);
+                else
+                    throw new Exception("Can't subscribe to yourself");
+            }
+            else
+                throw new Exception("You are not authorized");
+        }
     }
+
 }
+

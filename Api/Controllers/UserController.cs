@@ -89,7 +89,7 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<FileResult> GetUserAvatar(Guid userId)
         {
-            var attach = await _userService.GetUserAvatar(userId);
+            var attach = await _userService.GetUserAvatar(userId, GetCurrentUserIdWithoutException());
             if (attach == null)
             {
                 throw new Exception("No avatar");
@@ -100,7 +100,7 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<FileResult> DownloadAvatar(Guid userId)
         {
-            var attach = await _userService.GetUserAvatar(userId);
+            var attach = await _userService.GetUserAvatar(userId,GetCurrentUserId());
 
             HttpContext.Response.ContentType = attach.Mimetype;
             FileContentResult result = new FileContentResult(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype)
@@ -124,9 +124,9 @@ namespace Api.Controllers
         }
 
 
-        [Authorize]
-        [HttpGet]
-        public async Task<List<UserModel>> OfferUsersYouMightLike() => await _userService.GetUsersYouMightLike(GetCurrentUserId());
+        //[Authorize]
+        //[HttpGet]
+        // async Task<List<UserModel>> OfferUsersYouMightLike() => await _userService.GetUsersYouMightLike(GetCurrentUserId());
 
         [Authorize]
         [HttpGet]
@@ -148,11 +148,19 @@ namespace Api.Controllers
         {
             var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
             if (Guid.TryParse(userIdString, out var userId))
-            {
                 return userId;
-            }
             else
                 throw new Exception("You are not authorized");
+        }
+
+        [Authorize]
+        [HttpGet]
+        private Guid GetCurrentUserIdWithoutException() //Нужно для того, когда хотелось бы найти текущего пользователя, но авторизация не важна.
+        {
+            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
+            Guid.TryParse(userIdString, out var userId);
+            return userId;
+
         }
 
         [Authorize]

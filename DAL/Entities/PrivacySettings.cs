@@ -13,7 +13,7 @@ namespace DAL.Entities
         //public Guid Id { get; set; }
         public Privacy AvatarAccess { get; set; }
         public Privacy PostAccess { get; set; }
-        public Privacy MessageAccess { get; set; }
+        public Privacy MessageAccess { get; set; } //На будущее
         public Privacy CommentAccess { get; set; }
 
         public virtual User User { get; set; } = null!;

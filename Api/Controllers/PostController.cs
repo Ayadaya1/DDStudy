@@ -105,7 +105,7 @@ namespace Api.Controllers
 
         [HttpGet]
         [Route("")]
-        public async Task<PostModel> GetPost(Guid id) => await _postService.GetPostById(id);
+        public async Task<PostModel> GetPost(Guid id) => await _postService.GetPostById(id, GetCurrentUserIdWithoutException());
 
         [HttpGet]
         public async Task<FileResult> GetPostContent(Guid postAttachId)
@@ -127,7 +127,7 @@ namespace Api.Controllers
         }
 
         [HttpGet]
-        public async Task<List<CommentOutputModel>> GetAllComments(Guid postId) => await _postService.GetComments(postId);
+        public async Task<List<CommentOutputModel>> GetAllComments(Guid postId) => await _postService.GetComments(postId, GetCurrentUserIdWithoutException());
 
 
         [Authorize]
@@ -149,6 +149,16 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<List<PostModel>> GetSubscribedPosts(int take, int skip) 
             => await _postService.GetPostsOfThoseYoureSubscribedTo(take, skip, GetCurrentUserId());
+
+        [Authorize]
+        [HttpGet]
+        private Guid GetCurrentUserIdWithoutException() //Нужно для того, когда хотелось бы найти текущего пользователя, но авторизация не важна.
+        {
+            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
+            Guid.TryParse(userIdString, out var userId);
+            return userId;
+
+        }
     }
 
 }

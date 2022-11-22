@@ -9,7 +9,7 @@ namespace Api.Services
         public Func<PostAttach, string?>? LinkContentGenerator;
         public Func<User, string?>? LinkAvatarGenerator;
         public Func<Avatar, string?>? LinkLikeableAvatarGenerator;
-
+        public Func<User, string?>? LinkAttachmentGenerator;
         public void FixAvatar(User s, UserModel d)
         {
             d.Avatar = s.Avatar == null ? null : LinkAvatarGenerator?.Invoke(s);
@@ -22,5 +22,6 @@ namespace Api.Services
         {
             d.Avatar = s == null ? null : LinkLikeableAvatarGenerator?.Invoke(s);
         }
+
     }
 }

@@ -5,6 +5,7 @@ using DAL.Entities;
 using Api.Models.Posts;
 using Api.Models.Attaches;
 using Api.Models.Comments;
+using Common.Enums;
 
 namespace Api.Services
 {
@@ -12,13 +13,15 @@ namespace Api.Services
     {
         private readonly IMapper _mapper;
         private readonly DAL.DataContext _context;
+        private readonly UserService _userService;
 
         private Func<Guid, string?>? _contentLinkGenerator;
 
-        public PostService(IMapper mapper, DataContext context)
+        public PostService(IMapper mapper, DataContext context, UserService userService)
         {
             _mapper = mapper;
             _context = context;
+            _userService = userService;
         }
 
         public void SetLinkGenerator(Func<Guid, string?> contentLinkGenerator)
@@ -60,14 +63,22 @@ namespace Api.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<PostModel> GetPostById(Guid id)
+        public async Task<PostModel> GetPostById(Guid id, Guid userId)
         {
-            var post = await _context.Posts.Include(x=>x.User).ThenInclude(x=>x.Avatar).Include(x=>x.Attaches).Include(x=>x.Comments).Include(x=>x.Likes).FirstOrDefaultAsync(x => x.Id == id);
+            var post = await _context.Posts.Include(x=>x.User).ThenInclude(x=>x.Avatar)
+                .Include(x=>x.Attaches)
+                .Include(x=>x.Comments)
+                .Include(x=>x.Likes)
+                .Include(x=>x.User).ThenInclude(x=>x.PrivacySettings)
+                .FirstOrDefaultAsync(x => x.Id == id);
             if(post== null)
             {
                 throw new Exception("Post not found");
-            }    
-            return _mapper.Map<PostModel>(post);
+            }
+            if (post.User.PrivacySettings.PostAccess == Privacy.Everybody || await _userService.CheckSubscription(userId, post.User.Id))
+                return _mapper.Map<PostModel>(post);
+            else
+                throw new Exception("You should subscribe to see this post");
         }
 
         public async Task<AttachModel> GetPostAttachById(Guid id)
@@ -78,8 +89,8 @@ namespace Api.Services
 
         public async Task AddComment(CommentInputModel model, Guid userId, Guid postId)
         {
-            var post = await _context.Posts.Include(x => x.Comments).ThenInclude(x => x.User).FirstOrDefaultAsync(x => x.Id == postId);
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var post = await _context.Posts.Include(x => x.Comments).ThenInclude(x => x.User).ThenInclude(x=>x.Subscribers).Include(x=>x.User).ThenInclude(x=>x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == postId);
+            var user = await _context.Users.Include(x=>x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == userId);
             if(user==null)
             {
                 throw new Exception("User is null");
@@ -96,11 +107,15 @@ namespace Api.Services
                 User = user,
                 
             };
-            if(post!=null)
-                post.Comments.Add(comment);
-            await _context.Comments.AddAsync(comment);
-            await _context.SaveChangesAsync();
-
+            if (post.User.PrivacySettings.CommentAccess == Privacy.Everybody || await _userService.CheckSubscription(userId, post.User.Id))
+            {
+                if (post != null)
+                    post.Comments.Add(comment);
+                await _context.Comments.AddAsync(comment);
+                await _context.SaveChangesAsync();
+            }
+            else
+                throw new Exception("You should subscribe to leave comments");
         }
 
         public string? FixContent(PostAttach s)
@@ -108,26 +123,32 @@ namespace Api.Services
             return _contentLinkGenerator?.Invoke(s.Id);
         }
 
-        public async Task<List<CommentOutputModel>>GetComments(Guid postId)
+        public async Task<List<CommentOutputModel>>GetComments(Guid postId, Guid userId)
         {
             var post = await _context.Posts
                 .Include(x=>x.Comments).ThenInclude(x=>x.User).ThenInclude(x => x.Avatar)
                 .Include(x => x.Comments).ThenInclude(x => x.User).ThenInclude(x => x.Subscribers)
                 .Include(x => x.Comments).ThenInclude(x => x.User).ThenInclude(x => x.Subscriptions)
                 .Include(x => x.Comments).ThenInclude(x => x.Likes)
+                .Include(x=>x.User).ThenInclude(x=>x.PrivacySettings)
                 .FirstOrDefaultAsync(x => x.Id == postId);
             if (post == null)
                 throw new Exception("Post not found");
-            return _mapper.Map<List<CommentOutputModel>>(post.Comments.OrderBy(x=>x.Created));
+            if (post.User.PrivacySettings.PostAccess == Privacy.Everybody || await _userService.CheckSubscription(userId, post.User.Id))
+                return _mapper.Map<List<CommentOutputModel>>(post.Comments.OrderBy(x => x.Created));
+            else
+                throw new Exception("You should be subsribed to see this");
         }
 
         public async Task<List<PostModel>> GetTopPosts(int take, int skip)
         {
             var posts = await _context.Posts.Include(x=>x.Likes)
                 .Include(x=>x.Attaches)
+                .Include(x=>x.User).ThenInclude(x=>x.PrivacySettings)
                 .Include(x=>x.User).ThenInclude(x=>x.Subscribers)
                 .Include(x => x.User).ThenInclude(x => x.Subscriptions)
                 .Include(x => x.User).ThenInclude(x => x.Avatar)
+                .Where(x=>x.User.PrivacySettings.PostAccess==Privacy.Everybody)
                 .OrderByDescending(x => x.Likes.Count).Skip(skip).Take(take).ToListAsync();
             return _mapper.Map<List<PostModel>>(posts);
         }

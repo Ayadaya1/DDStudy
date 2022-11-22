@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Api.Models.Attaches;
 using Api.Models.User;
 using Api.Models.Auth;
+using Common.Constants;
 
 namespace Api.Services
 {
@@ -222,16 +223,17 @@ namespace Api.Services
             }
         }
 
-        public async Task<AttachModel> GetUserAvatar(Guid userId)
+        public async Task<AttachModel> GetUserAvatar(Guid userId, Guid currentUserId)
         {
             var user = await _context.Users.Include(x => x.Avatar).Include(x=>x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == userId);
             if (user != null)
             {
                 AttachModel attach;
-                if (user.PrivacySettings.AvatarAccess == Privacy.Everybody)
+                if (user.PrivacySettings.AvatarAccess == Privacy.Everybody || await CheckSubscription(currentUserId, userId))
                     attach = _mapper.Map<AttachModel>(user.Avatar);
                 else
-                    attach = null!;
+                    attach = _mapper.Map < AttachModel > (await GetAttachById(DefaultResources.DefaultAvatarId));
+                //Если пользователь не подписан на того, кто требует подписку для просмотра его аватара, то вместо аватара он видит "стандартный" аватар, предзагруженный на сервер.
                 return attach!;
             }
             else
@@ -313,9 +315,9 @@ namespace Api.Services
         {
             var subscriber = await _context.Users.Include(x => x.Subscriptions).FirstOrDefaultAsync(x => x.Id == subscriberId);
             var target = await _context.Users.Include(x => x.Subscribers).ThenInclude(y => y.Subscriber).FirstOrDefaultAsync(x => x.Id == targetId);
-            if (subscriber == null || target == null)
+            if ( target == null)
                 throw new Exception("One of the users is null");
-            if (target.Subscribers.FirstOrDefault(x => x.Subscriber.Id == subscriber.Id) == null)
+            if (subscriberId == Guid.Empty||target.Subscribers.FirstOrDefault(x => x.Subscriber.Id == subscriber.Id) == null)
                 return false;
             return true;
         }
@@ -369,5 +371,17 @@ namespace Api.Services
             _context.Remove(sub);
             await _context.SaveChangesAsync();
         }
+        public async Task<AttachModel> GetAttachById(Guid id)
+        {
+            var attach = await _context.Attaches.FirstOrDefaultAsync(x => x.Id == id);
+            if (attach == null)
+            {
+                throw new Exception("Attach is null");
+            }
+            var mappedAttach = _mapper.Map<AttachModel>(attach);
+            return mappedAttach;
+
+        }
+
     }
 }

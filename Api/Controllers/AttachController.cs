@@ -35,5 +35,14 @@ namespace Api.Controllers
         {
             return await _attachService.LoadFile(file);
         }
+        [HttpGet]
+        public async Task<FileResult> GetAttachById(Guid attachId)
+        {
+            var attach = await _attachService.GetAttachById(attachId);
+            if (attach == null)
+                throw new Exception("The attach is null");
+
+            return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype);
+        }
     }
 }

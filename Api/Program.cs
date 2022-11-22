@@ -63,8 +63,6 @@ builder.Services.AddScoped<PostService>();
 
 builder.Services.AddTransient<AttachService>();
 
-builder.Services.AddScoped<SubscriptionService>();
-
 builder.Services.AddScoped<LikeService>();
 
 builder.Services.AddScoped<LinkGeneratorService>();

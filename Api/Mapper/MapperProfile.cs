@@ -36,6 +36,8 @@ namespace Api.Mapper
 
             CreateMap<Avatar, ILikeable>();
 
+            CreateMap<Attach, AttachModel>();
+
             CreateMap<Post, PostModel>()
                 .ForMember(d => d.Likes, m => m.MapFrom(s => s.Likes.Count))
                 .ForMember(d => d.Comments, m => m.MapFrom(s => s.Comments.Count))

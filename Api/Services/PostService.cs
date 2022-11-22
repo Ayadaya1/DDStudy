@@ -1,8 +1,10 @@
-﻿using Api.Models;
-using AutoMapper;
+﻿using AutoMapper;
 using DAL;
 using Microsoft.EntityFrameworkCore;
 using DAL.Entities;
+using Api.Models.Posts;
+using Api.Models.Attaches;
+using Api.Models.Comments;
 
 namespace Api.Services
 {
@@ -36,7 +38,8 @@ namespace Api.Services
                 Id = Guid.NewGuid(),
                 User = user,
                 Created = DateTime.UtcNow,
-                Text = text
+                Text = text,
+                Attaches = _mapper.Map<List<PostAttach>>(attaches)
             };
             foreach(MetadataModel meta in attaches)
             {
@@ -57,14 +60,14 @@ namespace Api.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Post> GetPostById(Guid id)
+        public async Task<PostModel> GetPostById(Guid id)
         {
-            var post = await _context.Posts.Include(x=>x.User).Include(x=>x.Attaches).Include(x=>x.Comments).FirstOrDefaultAsync(x => x.Id == id);
+            var post = await _context.Posts.Include(x=>x.User).ThenInclude(x=>x.Avatar).Include(x=>x.Attaches).Include(x=>x.Comments).Include(x=>x.Likes).FirstOrDefaultAsync(x => x.Id == id);
             if(post== null)
             {
                 throw new Exception("Post not found");
             }    
-            return post;
+            return _mapper.Map<PostModel>(post);
         }
 
         public async Task<AttachModel> GetPostAttachById(Guid id)
@@ -90,7 +93,8 @@ namespace Api.Services
                 Text = model.Text,
                 Created = DateTime.UtcNow,
                 Id = Guid.NewGuid(),
-                User = user
+                User = user,
+                
             };
             if(post!=null)
                 post.Comments.Add(comment);
@@ -102,6 +106,41 @@ namespace Api.Services
         public string? FixContent(PostAttach s)
         {
             return _contentLinkGenerator?.Invoke(s.Id);
+        }
+
+        public async Task<List<CommentOutputModel>>GetComments(Guid postId)
+        {
+            var post = await _context.Posts
+                .Include(x=>x.Comments).ThenInclude(x=>x.User).ThenInclude(x => x.Avatar)
+                .Include(x => x.Comments).ThenInclude(x => x.User).ThenInclude(x => x.Subscribers)
+                .Include(x => x.Comments).ThenInclude(x => x.User).ThenInclude(x => x.Subscriptions)
+                .Include(x => x.Comments).ThenInclude(x => x.Likes)
+                .FirstOrDefaultAsync(x => x.Id == postId);
+            if (post == null)
+                throw new Exception("Post not found");
+            return _mapper.Map<List<CommentOutputModel>>(post.Comments.OrderBy(x=>x.Created));
+        }
+
+        public async Task<List<PostModel>> GetTopPosts(int take, int skip)
+        {
+            var posts = await _context.Posts.Include(x=>x.Likes)
+                .Include(x=>x.Attaches)
+                .Include(x=>x.User).ThenInclude(x=>x.Subscribers)
+                .Include(x => x.User).ThenInclude(x => x.Subscriptions)
+                .Include(x => x.User).ThenInclude(x => x.Avatar)
+                .OrderByDescending(x => x.Likes.Count).Skip(skip).Take(take).ToListAsync();
+            return _mapper.Map<List<PostModel>>(posts);
+        }
+
+        public async Task<List<PostModel>> GetPostsOfThoseYoureSubscribedTo(int take, int skip, Guid userId)
+        {
+            var posts = await _context.Posts.Include(x => x.Likes)
+                .Include(x => x.Attaches)
+                .Include(x => x.User).ThenInclude(x => x.Subscribers).ThenInclude(x => x.Subscriber)
+                .Include(x => x.User).ThenInclude(x => x.Subscriptions)
+                .Include(x => x.User).ThenInclude(x => x.Avatar)
+                .OrderByDescending(x => x.Created).Skip(skip).Take(take).Where(x=>x.User.Subscribers.FirstOrDefault(x=>x.Subscriber.Id==userId)!=null).ToListAsync();
+            return _mapper.Map<List<PostModel>>(posts);
         }
     }
 }

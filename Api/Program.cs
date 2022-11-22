@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using DAL;
+using DAL.Entities;
+using Api.Mapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,10 @@ builder.Services.AddScoped<PostService>();
 builder.Services.AddTransient<AttachService>();
 
 builder.Services.AddScoped<SubscriptionService>();
+
+builder.Services.AddScoped<LikeService>();
+
+builder.Services.AddScoped<LinkGeneratorService>();
 
 builder.Services.AddAuthentication(o =>
 {

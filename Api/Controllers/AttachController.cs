@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Api.Models;
 using Api.Services;
+using Api.Models.Attaches;
 
 namespace Api.Controllers
 {

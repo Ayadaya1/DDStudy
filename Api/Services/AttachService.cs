@@ -1,4 +1,4 @@
-﻿using Api.Models;
+﻿using Api.Models.Attaches;
 using AutoMapper;
 using DAL;
 using Microsoft.AspNetCore.Mvc;

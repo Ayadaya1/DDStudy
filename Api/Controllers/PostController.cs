@@ -1,5 +1,4 @@
-﻿using Api.Models;
-using Api.Services;
+﻿using Api.Services;
 using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -8,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using static System.Net.WebRequestMethods;
 using Common.Extentions;
+using Api.Models.Posts;
+using Api.Models.Comments;
+using Api.Models.Attaches;
 
 namespace Api.Controllers
 {
@@ -19,12 +21,20 @@ namespace Api.Controllers
         private readonly PostService _postService;
         private readonly AttachService _attachService;
 
-        public PostController(UserService userService, PostService postService, AttachService attachService)
+        public PostController(UserService userService, PostService postService, AttachService attachService, LinkGeneratorService links)
         {
             _userService = userService;
             _postService = postService;
             _attachService = attachService;
             _postService.SetLinkGenerator(_contentLinkGenerator);
+            links.LinkAvatarGenerator = x => Url.ControllerAction<UserController>(nameof(UserController.GetUserAvatar), new
+            {
+                userId = x.Id,
+            });
+            links.LinkContentGenerator = x => Url.ControllerAction<PostController>(nameof(PostController.GetPostContent), new
+            {
+                postAttachId = x.Id,
+            });
         }
 
         private string? _contentLinkGenerator(Guid postAttachId)
@@ -74,48 +84,28 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task AddPostWithNewFiles([FromForm]List<IFormFile> files, string text)
+        public async Task AddPostWithNewFiles([FromForm] List<IFormFile> files, string text)
         {
             var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
-            if (Guid.TryParse(userIdString, out var userId))
+            var userId = GetCurrentUserId();
+            var user = await _userService.GetUser(userId);
+            if (user != null)
             {
-                var user =  await _userService.GetUser(userId);
-                if (user!=null)
+                var meta = new List<MetadataModel>();
+                foreach (IFormFile file in files)
                 {
-                    var meta = new List<MetadataModel>();
-                    foreach (IFormFile file in files)
-                    {
-                        var model = await _attachService.LoadFile(file);
-                        meta.Add(model);
-                    }
-
-                    await AddPost(meta, text);
+                    var model = await _attachService.LoadFile(file);
+                    meta.Add(model);
                 }
+
+                await AddPost(meta, text);
             }
-            else
-                throw new Exception("You are not authorized");
 
         }
 
         [HttpGet]
         [Route("")]
-        public async Task<PostModel> GetPost(Guid id)
-        {
-            var post =  await _postService.GetPostById(id);
-            var model = new PostModel
-            {
-                Created = post.Created,
-                Text = post.Text,
-                UserName = post.User.Name,
-                Comments = post.Comments.Count
-            };
-            foreach (var attach in post.Attaches)
-            {
-                var path = _postService.FixContent(attach);
-                model.Attaches.Add(path);
-            }
-            return model;
-        }
+        public async Task<PostModel> GetPost(Guid id) => await _postService.GetPostById(id);
 
         [HttpGet]
         public async Task<FileResult> GetPostContent(Guid postAttachId)
@@ -123,9 +113,7 @@ namespace Api.Controllers
             var attach = await _postService.GetPostAttachById(postAttachId);
 
             if(attach == null)
-            {
                 throw new Exception("The attach is null");
-            }
 
             return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype);
         }
@@ -134,34 +122,33 @@ namespace Api.Controllers
         [HttpPost]
         public async Task AddCommentToPost(Guid postId, CommentInputModel model)
         {
+            var userId = GetCurrentUserId();
+                await _postService.AddComment(model, userId, postId);
+        }
+
+        [HttpGet]
+        public async Task<List<CommentOutputModel>> GetAllComments(Guid postId) => await _postService.GetComments(postId);
+
+
+        [Authorize]
+        [HttpGet]
+        private Guid GetCurrentUserId()
+        {
             var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
             if (Guid.TryParse(userIdString, out var userId))
-            {
-                await _postService.AddComment(model, userId, postId);
-            }
+                return userId;
             else
                 throw new Exception("You are not authorized");
         }
 
+        //[Authorize]
         [HttpGet]
-        public async Task<List<CommentOutputModel>> GetAllComments(Guid postId)
-        {
-            var post = await _postService.GetPostById(postId);
+        public async Task<List<PostModel>> GetTopPosts(int take, int skip)=> await _postService.GetTopPosts(take, skip);
 
-            var comments = new List<CommentOutputModel>();
-
-            foreach(var comment in post.Comments)
-            {
-                var model = new CommentOutputModel
-                {
-                    Created = comment.Created,
-                    AuthorName = comment.User.Name,
-                    Text = comment.Text
-                };
-                comments.Add(model);
-            }
-
-            return comments;
-        }
+        [Authorize]
+        [HttpGet]
+        public async Task<List<PostModel>> GetSubscribedPosts(int take, int skip) 
+            => await _postService.GetPostsOfThoseYoureSubscribedTo(take, skip, GetCurrentUserId());
     }
+
 }

@@ -1,7 +1,8 @@
-﻿namespace Api.Models
+﻿namespace Api.Models.User
 {
     public class UserModel
     {
+        public string? Avatar { get; set; }
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public string Email { get; set; } = null!;

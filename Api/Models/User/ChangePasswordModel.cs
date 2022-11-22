@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Api.Models
+namespace Api.Models.User
 {
     public class ChangePasswordModel
     {
@@ -8,7 +8,7 @@ namespace Api.Models
         [RegularExpression(@"(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).*",
         ErrorMessage = "Пароль должен содержать хотя бы одну заглавную, одну строчную латинскую букву и одну цифру!")]
         public string NewPassword { get; set; }
-        
+
         public ChangePasswordModel(string newPassword)
         {
             NewPassword = newPassword;

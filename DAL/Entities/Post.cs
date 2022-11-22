@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DAL.Entities;
 
 namespace DAL.Entities
 {
-    public class Post
+    public class Post : ILikeable
     {
         public Guid Id { get; set; }
         public DateTimeOffset Created { get; set; }
@@ -15,5 +16,7 @@ namespace DAL.Entities
         public string Text { get; set; } = string.Empty;
 
         public virtual User User { get; set; } = null!;
+
+        public virtual ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
     }
 }

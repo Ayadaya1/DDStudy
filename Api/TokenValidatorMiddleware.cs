@@ -17,7 +17,7 @@ namespace Api
             var isOk = true;
             if(Guid.TryParse(sessionIdString, out var sessionId))
             {
-                var session = await service.GetSessinById(sessionId);
+                var session = await service.GetSessionById(sessionId);
                 if(!session.IsActive)
                 {
                     isOk = false;

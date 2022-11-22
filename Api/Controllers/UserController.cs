@@ -1,5 +1,4 @@
-﻿using Api.Models;
-using Api.Services;
+﻿using Api.Services;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using DAL;
@@ -9,6 +8,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Common;
+using DAL.Entities;
+using Common.Extentions;
+using Api.Models.User;
+using Api.Models.Attaches;
+using Api.Models.Subscriptions;
 
 namespace Api.Controllers
 {
@@ -17,9 +21,13 @@ namespace Api.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
-        public UserController(UserService userService)
+        public UserController(UserService userService, LinkGeneratorService links)
         {
             _userService = userService;
+            links.LinkAvatarGenerator = x => Url.ControllerAction<UserController>(nameof(UserController.GetUserAvatar), new
+            {
+                userId = x.Id,
+            });
         }
 
         [HttpPost]
@@ -39,13 +47,8 @@ namespace Api.Controllers
         [Authorize]
         public async Task<UserModel> GetCurrentUser()
         {
-            var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
-            if (Guid.TryParse(userIdString, out var userId))
-            {
-                return await _userService.GetUser(userId);
-            }
-            else
-                throw new Exception("You are not authorized");
+            var userId = GetCurrentUserId();
+            return await _userService.GetUser(userId);
         }
 
         [HttpPost]
@@ -70,7 +73,7 @@ namespace Api.Controllers
             {
                 var path = Path.Combine(Directory.GetCurrentDirectory(), "Attaches", model.TempId.ToString());
                 var destFi = new FileInfo(path);
-                if (destFi.Directory != null&& !destFi.Directory.Exists)
+                if (destFi.Directory != null && !destFi.Directory.Exists)
                     destFi.Directory.Create();
 
                 if (path != null)
@@ -87,10 +90,10 @@ namespace Api.Controllers
         public async Task<FileResult> GetUserAvatar(Guid userId)
         {
             var attach = await _userService.GetUserAvatar(userId);
-            if(attach== null)
+            if (attach == null)
             {
                 throw new Exception("No avatar");
-            }    
+            }
             return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype);
         }
 
@@ -104,7 +107,7 @@ namespace Api.Controllers
             {
                 FileDownloadName = attach.Name
             };
-            
+
 
             return result;
         }
@@ -113,17 +116,54 @@ namespace Api.Controllers
         [HttpPost]
         public async Task SubscribeToUser(SubscriptionModel model)
         {
+            var userId = GetCurrentUserId();
+            if(userId == model.TargetId)
+                throw new Exception("Can't subscribe to yourself");
+
+            await _userService.Subscribe(userId, model.TargetId);   
+        }
+
+
+        [Authorize]
+        [HttpGet]
+        public async Task<List<UserModel>> OfferUsersYouMightLike() => await _userService.GetUsersYouMightLike(GetCurrentUserId());
+
+        [Authorize]
+        [HttpGet]
+        public async Task<List<UserModel>> GetSubscriptions() => await _userService.GetSubs(GetCurrentUserId());
+
+        [Authorize]
+        [HttpGet]
+        public async Task<List<UserModel>> GetSubscribers() => await _userService.GetSubbers(GetCurrentUserId());
+
+
+        [Authorize]
+        [HttpGet]
+        public async Task<bool> CheckSubscription(Guid targetId) => await _userService.CheckSubscription(GetCurrentUserId(), targetId);
+
+
+        [Authorize]
+        [HttpGet]
+        private Guid GetCurrentUserId()
+        {
             var userIdString = User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
             if (Guid.TryParse(userIdString, out var userId))
             {
-                if (model.TargetId != userId)
-                    await _userService.Subscribe(userId, model.TargetId);
-                else
-                    throw new Exception("Can't subscribe to yourself");
+                return userId;
             }
             else
                 throw new Exception("You are not authorized");
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task ChangePrivacySettings(ChangePrivacySettingsModel model) => await _userService.ChangePrivacySettings(GetCurrentUserId(), model);
+
+        [Authorize]
+        [HttpPost]
+        public async Task UnsubscribeFromUser(Guid targetId) => await _userService.Unsubscribe(GetCurrentUserId(), targetId);
+
+
     }
 
 }

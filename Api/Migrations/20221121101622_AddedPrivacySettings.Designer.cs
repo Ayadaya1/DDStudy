@@ -3,6 +3,7 @@ using System;
 using DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20221121101622_AddedPrivacySettings")]
+    partial class AddedPrivacySettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,21 +55,6 @@ namespace Api.Migrations
                     b.ToTable("Attaches");
                 });
 
-            modelBuilder.Entity("DAL.Entities.AvatarLike", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AvatarId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("UserId", "AvatarId");
-
-                    b.HasIndex("AvatarId");
-
-                    b.ToTable("AvatarLikes", (string)null);
-                });
-
             modelBuilder.Entity("DAL.Entities.Comment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -96,21 +83,6 @@ namespace Api.Migrations
                     b.ToTable("Comments");
                 });
 
-            modelBuilder.Entity("DAL.Entities.CommentLike", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CommentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("UserId", "CommentId");
-
-                    b.HasIndex("CommentId");
-
-                    b.ToTable("CommentLikes", (string)null);
-                });
-
             modelBuilder.Entity("DAL.Entities.Post", b =>
                 {
                     b.Property<Guid>("Id")
@@ -132,21 +104,6 @@ namespace Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("DAL.Entities.PostLike", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("UserId", "PostId");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("PostLikes", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.PrivacySettings", b =>
@@ -282,25 +239,6 @@ namespace Api.Migrations
                     b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("DAL.Entities.AvatarLike", b =>
-                {
-                    b.HasOne("DAL.Entities.Avatar", "Avatar")
-                        .WithMany("Likes")
-                        .HasForeignKey("AvatarId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DAL.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Avatar");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("DAL.Entities.Comment", b =>
                 {
                     b.HasOne("DAL.Entities.Post", null)
@@ -316,25 +254,6 @@ namespace Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DAL.Entities.CommentLike", b =>
-                {
-                    b.HasOne("DAL.Entities.Comment", "Comment")
-                        .WithMany("Likes")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DAL.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("DAL.Entities.Post", b =>
                 {
                     b.HasOne("DAL.Entities.User", "User")
@@ -342,25 +261,6 @@ namespace Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DAL.Entities.PostLike", b =>
-                {
-                    b.HasOne("DAL.Entities.Post", "Post")
-                        .WithMany("Likes")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DAL.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
 
                     b.Navigation("User");
                 });
@@ -441,18 +341,11 @@ namespace Api.Migrations
                     b.Navigation("Post");
                 });
 
-            modelBuilder.Entity("DAL.Entities.Comment", b =>
-                {
-                    b.Navigation("Likes");
-                });
-
             modelBuilder.Entity("DAL.Entities.Post", b =>
                 {
                     b.Navigation("Attaches");
 
                     b.Navigation("Comments");
-
-                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("DAL.Entities.User", b =>
@@ -471,8 +364,6 @@ namespace Api.Migrations
 
             modelBuilder.Entity("DAL.Entities.Avatar", b =>
                 {
-                    b.Navigation("Likes");
-
                     b.Navigation("User")
                         .IsRequired();
                 });

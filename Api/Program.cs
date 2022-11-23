@@ -1,4 +1,3 @@
-using Api;
 using Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Api.Configs;
@@ -8,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using DAL;
 using DAL.Entities;
 using Api.Mapper;
+using Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -119,6 +119,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseTokenValidator();
+
+app.UseGlobalErrorWrapper();
 
 app.MapControllers();
 

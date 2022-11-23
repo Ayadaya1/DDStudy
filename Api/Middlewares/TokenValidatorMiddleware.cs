@@ -1,7 +1,7 @@
 ﻿using Api.Services;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace Api
+namespace Api.Middlewares
 {
     public class TokenValidatorMiddleware
     {
@@ -15,10 +15,10 @@ namespace Api
         {
             var sessionIdString = context.User.Claims.FirstOrDefault(x => x.Type == "sessionId")?.Value;
             var isOk = true;
-            if(Guid.TryParse(sessionIdString, out var sessionId))
+            if (Guid.TryParse(sessionIdString, out var sessionId))
             {
                 var session = await service.GetSessionById(sessionId);
-                if(!session.IsActive)
+                if (!session.IsActive)
                 {
                     isOk = false;
                     context.Response.Clear();
@@ -26,7 +26,7 @@ namespace Api
                     await context.Response.WriteAsync("Session is not active");
                 }
             }
-            if(isOk)
+            if (isOk)
             {
                 await _next(context);
             }

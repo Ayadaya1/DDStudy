@@ -1,4 +1,5 @@
-﻿using Api.Models.Attaches;
+﻿using Api.Exceptions;
+using Api.Models.Attaches;
 using Api.Models.Comments;
 using Api.Models.Posts;
 using Api.Models.User;
@@ -33,7 +34,7 @@ namespace Api.Services
 
                     var temp = await _context.Posts.Include(x => x.Likes).FirstOrDefaultAsync(x => x.Id == contentId);
                     if (temp == null)
-                        throw new Exception("Post not found");
+                        throw new PostNotFoundException();
 
                     likeable = temp;
                     PostLike like = new PostLike
@@ -52,7 +53,7 @@ namespace Api.Services
 
                     var tempAvatarLike = await _context.Avatars.Include(x => x.Likes).FirstOrDefaultAsync(x => x.Id == contentId);
                     if (tempAvatarLike == null)
-                        throw new Exception("Avatar not found");
+                        throw new AttachNotFoundException();
 
                     likeable = tempAvatarLike;
                     AvatarLike avatarLike = new AvatarLike
@@ -71,7 +72,7 @@ namespace Api.Services
 
                     var tempCommentLike = await _context.Comments.Include(x => x.Likes).FirstOrDefaultAsync(x => x.Id == contentId);
                     if (tempCommentLike == null)
-                        throw new Exception("Comment not found");
+                        throw new CommentNotFoundException();
 
                     likeable = tempCommentLike;
                     CommentLike commentLike = new CommentLike
@@ -84,7 +85,7 @@ namespace Api.Services
                     break;
 
                 default:
-                    throw new Exception("Invalid content type");
+                    throw new InvalidContentTypeException();
 
 
             }
@@ -133,23 +134,23 @@ namespace Api.Services
                 case "Post":
                     var postLike = await _context.PostLikes.FirstOrDefaultAsync(x => x.PostId == contentId && x.UserId == userId);
                     if (postLike == null)
-                        throw new Exception("PostLike not found");
+                        throw new PostNotFoundException();
                     _context.PostLikes.Remove(postLike);
                     break;
                 case "Avatar":
                     var avatarLike = await _context.AvatarLikes.FirstOrDefaultAsync(x => x.AvatarId == contentId && x.UserId == userId);
                     if (avatarLike == null)
-                        throw new Exception("AvatarLike not found");
+                        throw new AttachNotFoundException();
                     _context.AvatarLikes.Remove(avatarLike);
                     break;
                 case "Comment":
                     var commentLike = await _context.CommentLikes.FirstOrDefaultAsync(x => x.CommentId == contentId && x.UserId == userId);
                     if (commentLike == null)
-                        throw new Exception("CommentLike not found");
+                        throw new CommentNotFoundException();
                     _context.CommentLikes.Remove(commentLike);
                     break;
                 default:
-                    throw new Exception("Invalid content type");
+                    throw new InvalidContentTypeException();
 
                     
             }
@@ -164,7 +165,7 @@ namespace Api.Services
             {
                 case "Post":
                     if (await _context.Posts.FirstOrDefaultAsync(x => x.Id == contentId) == null)
-                        throw new Exception("Post not found");
+                        throw new PostNotFoundException();
                     var postLikers =  await _context.PostLikes
                         .Include(x=>x.User).ThenInclude(x=>x.Avatar)
                         .Include(x => x.User).ThenInclude(x => x.Subscribers)
@@ -175,7 +176,7 @@ namespace Api.Services
 
                 case "Avatar":
                     if (await _context.Avatars.FirstOrDefaultAsync(x => x.Id == contentId) == null)
-                        throw new Exception("Avatar not found");
+                        throw new AttachNotFoundException();
                     var avatarLikers = await _context.AvatarLikes
                         .Include(x => x.User).ThenInclude(x => x.Avatar)
                         .Include(x => x.User).ThenInclude(x => x.Subscribers)
@@ -186,7 +187,7 @@ namespace Api.Services
 
                 case "Comment":
                     if (await _context.Comments.FirstOrDefaultAsync(x => x.Id == contentId) == null)
-                        throw new Exception("Comment not found");
+                        throw new CommentNotFoundException();
                     var commentLikers = await _context.CommentLikes
                         .Include(x => x.User).ThenInclude(x => x.Avatar)
                         .Include(x => x.User).ThenInclude(x => x.Subscribers)
@@ -196,7 +197,7 @@ namespace Api.Services
                     break;
 
                 default:
-                    throw new Exception("Invalid content type");
+                    throw new InvalidContentTypeException();
             }
 
             return _mapper.Map<List<UserModel>>(users);

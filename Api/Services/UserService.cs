@@ -15,6 +15,7 @@ using Api.Models.Attaches;
 using Api.Models.User;
 using Api.Models.Auth;
 using Common.Constants;
+using Api.Exceptions;
 
 namespace Api.Services
 {
@@ -72,7 +73,7 @@ namespace Api.Services
             var user = await _context.Users.Include(x=>x.Avatar).Include(x=>x.Subscribers).Include(x=>x.Subscriptions).FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
-                throw new Exception("User not found");
+                throw new UserNotFoundException();
             }
             return user;
         }
@@ -88,7 +89,7 @@ namespace Api.Services
             var user = await  _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == login.ToLower());
             if(user == null)
             {
-                throw new Exception("User not found");
+                throw new UserNotFoundException();
             }
             if (!HashHelper.Verify(password, user.PasswordHash))
                 throw new Exception("Wrong password");
@@ -205,7 +206,7 @@ namespace Api.Services
             var user = await _context.Users.Include(x => x.Avatar).FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
             {
-                throw new Exception("The user is null");
+                throw new UserNotFoundException();
             }
             else
             {
@@ -238,7 +239,7 @@ namespace Api.Services
             }
             else
             {
-                throw new Exception("User is null");
+                throw new UserNotFoundException();
             }
         }
 

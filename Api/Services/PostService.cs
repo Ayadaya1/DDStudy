@@ -6,6 +6,7 @@ using Api.Models.Posts;
 using Api.Models.Attaches;
 using Api.Models.Comments;
 using Common.Enums;
+using Api.Exceptions;
 
 namespace Api.Services
 {
@@ -34,7 +35,7 @@ namespace Api.Services
             var user = await _context.Users.Include(x => x.Posts).ThenInclude(x=>x.Attaches).FirstOrDefaultAsync(x => x.Id == userId);
             if(user == null)
             {
-                throw new Exception("User is null");
+                throw new UserNotFoundException();
             }
             var post = new Post
             {
@@ -73,7 +74,7 @@ namespace Api.Services
                 .FirstOrDefaultAsync(x => x.Id == id);
             if(post== null)
             {
-                throw new Exception("Post not found");
+                throw new PostNotFoundException();
             }
             if (post.User.PrivacySettings.PostAccess == Privacy.Everybody || await _userService.CheckSubscription(userId, post.User.Id))
                 return _mapper.Map<PostModel>(post);
@@ -93,11 +94,11 @@ namespace Api.Services
             var user = await _context.Users.Include(x=>x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == userId);
             if(user==null)
             {
-                throw new Exception("User is null");
+                throw new UserNotFoundException();
             }
             if(post==null)
             {
-                throw new Exception("Post is null");
+                throw new PostNotFoundException();
             }
             var comment = new Comment
             {
@@ -133,7 +134,7 @@ namespace Api.Services
                 .Include(x=>x.User).ThenInclude(x=>x.PrivacySettings)
                 .FirstOrDefaultAsync(x => x.Id == postId);
             if (post == null)
-                throw new Exception("Post not found");
+                throw new PostNotFoundException();
             if (post.User.PrivacySettings.PostAccess == Privacy.Everybody || await _userService.CheckSubscription(userId, post.User.Id))
                 return _mapper.Map<List<CommentOutputModel>>(post.Comments.OrderBy(x => x.Created));
             else

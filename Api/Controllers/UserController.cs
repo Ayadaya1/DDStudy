@@ -13,6 +13,7 @@ using Common.Extentions;
 using Api.Models.User;
 using Api.Models.Attaches;
 using Api.Models.Subscriptions;
+using Api.Exceptions;
 
 namespace Api.Controllers
 {
@@ -67,7 +68,7 @@ namespace Api.Controllers
             var tempFi = new FileInfo(Path.Combine(Path.GetTempPath(), model.TempId.ToString()));
             if (!tempFi.Exists)
             {
-                throw new Exception("File not found!");
+                throw new Api.Exceptions.FileNotFoundException();
             }
             else
             {
@@ -92,7 +93,7 @@ namespace Api.Controllers
             var attach = await _userService.GetUserAvatar(userId, GetCurrentUserIdWithoutException());
             if (attach == null)
             {
-                throw new Exception("No avatar");
+                throw new AttachNotFoundException();
             }
             return File(System.IO.File.ReadAllBytes(attach.FilePath), attach.Mimetype);
         }

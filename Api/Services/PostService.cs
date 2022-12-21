@@ -43,7 +43,7 @@ namespace Api.Services
                 User = user,
                 Created = DateTime.UtcNow,
                 Text = text,
-                Attaches = _mapper.Map<List<PostAttach>>(attaches)
+                Attaches = new List<PostAttach>()
             };
             foreach(MetadataModel meta in attaches)
             {

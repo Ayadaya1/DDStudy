@@ -12,7 +12,7 @@ namespace Api.Services
         public Func<User, string?>? LinkAttachmentGenerator;
         public void FixAvatar(User s, UserModel d)
         {
-            d.Avatar = s.Avatar == null ? null : LinkAvatarGenerator?.Invoke(s);
+            d.Avatar = LinkAvatarGenerator?.Invoke(s);
         }
         public void FixContent(PostAttach s, AttachExternalModel d)
         {

@@ -38,10 +38,13 @@ namespace Api.Mapper
 
             CreateMap<Attach, AttachModel>();
 
+            CreateMap<MetadataModel, PostAttach>();
+
             CreateMap<Post, PostModel>()
                 .ForMember(d => d.Likes, m => m.MapFrom(s => s.Likes.Count))
                 .ForMember(d => d.Comments, m => m.MapFrom(s => s.Comments.Count))
-                .ForMember(d => d.Attaches, m => m.MapFrom(s => s.Attaches));
+                .ForMember(d => d.Attaches, m => m.MapFrom(s => s.Attaches))
+                .ForMember(d=>d.Id, m=>m.MapFrom(s=>s.Id));
 
             CreateMap<Avatar, LikeableAvatarModel>()
                 .ForMember(d => d.Likes, m => m.MapFrom(s => s.Likes.Count))

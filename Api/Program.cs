@@ -113,7 +113,6 @@ using (var serviceScope = ((IApplicationBuilder)app).ApplicationServices.GetServ
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -123,5 +122,4 @@ app.UseTokenValidator();
 app.UseGlobalErrorWrapper();
 
 app.MapControllers();
-
 app.Run();

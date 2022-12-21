@@ -230,7 +230,7 @@ namespace Api.Services
             if (user != null)
             {
                 AttachModel attach;
-                if (user.PrivacySettings.AvatarAccess == Privacy.Everybody || await CheckSubscription(currentUserId, userId))
+                if ((user.PrivacySettings.AvatarAccess == Privacy.Everybody || await CheckSubscription(currentUserId, userId)) || user.Avatar!=null)
                     attach = _mapper.Map<AttachModel>(user.Avatar);
                 else
                     attach = _mapper.Map < AttachModel > (await GetAttachById(DefaultResources.DefaultAvatarId));

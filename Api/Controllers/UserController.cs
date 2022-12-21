@@ -27,8 +27,8 @@ namespace Api.Controllers
             _userService = userService;
             links.LinkAvatarGenerator = x => Url.ControllerAction<UserController>(nameof(UserController.GetUserAvatar), new
             {
-                userId = x.Id,
-            });
+                userId = x.Id
+            }) ;
         }
 
         [HttpPost]

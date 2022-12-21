@@ -7,6 +7,7 @@ namespace Api.Models.Posts
 {
     public class PostModel
     {
+        public Guid Id { get; set; }
         public List<AttachExternalModel> Attaches { get; set; } = new List<AttachExternalModel>();
         public string Text { get; set; } = string.Empty;
         public DateTimeOffset Created { get; set; }

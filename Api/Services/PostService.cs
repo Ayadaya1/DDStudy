@@ -83,6 +83,21 @@ namespace Api.Services
                 throw new Exception("You should subscribe to see this post");
         }
 
+        public async Task<List<PostModel>> GetUserPosts(Guid userId)
+        {
+            var post = await _context.Posts.Include(x => x.User).ThenInclude(x => x.Avatar)
+                .Include(x => x.Attaches)
+                .Include(x => x.Comments)
+                .Include(x => x.Likes)
+                .Include(x => x.User).ThenInclude(x => x.PrivacySettings).Where(x => x.User.Id == userId).ToListAsync();
+            if (post == null)
+            {
+                throw new PostNotFoundException();
+            }
+                return _mapper.Map<List<PostModel>>(post);
+
+        }
+
         public async Task<AttachModel> GetPostAttachById(Guid id)
         {
             var attach = await _context.PostAttaches.FirstOrDefaultAsync(x => x.Id == id);
@@ -190,5 +205,7 @@ namespace Api.Services
                 .OrderByDescending(x => x.Created).Skip(skip).Take(take).Where(x=>x.User.Subscribers.FirstOrDefault(x=>x.Subscriber.Id==userId)!=null).ToListAsync();
             return _mapper.Map<List<PostModel>>(posts);
         }
+
+    
     }
 }

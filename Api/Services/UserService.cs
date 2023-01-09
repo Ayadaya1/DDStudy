@@ -323,6 +323,36 @@ namespace Api.Services
             return true;
         }
 
+        public async Task<ChangePrivacySettingsModel> GetPrivacySettings(Guid userId)
+        {
+            var settings = await _context.PrivacySettings.Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == userId);
+            if (settings != null)
+            {
+                return _mapper.Map<ChangePrivacySettingsModel>(settings);
+            }
+            else //У каждого юзера должны быть настройки приватности, поэтому, если их по какой-то причине нет - мы их создаём.
+            {
+                var user = await _context.Users.Include(x => x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == userId);
+                if (user != null)
+                {
+                    settings = new PrivacySettings()
+                    {
+                        User = user,
+                        UserId = user.Id
+                    };
+
+                    await _context.PrivacySettings.AddAsync(settings);
+                    user.PrivacySettings = settings;
+                    await _context.SaveChangesAsync();
+                    return _mapper.Map<ChangePrivacySettingsModel>(settings);
+                }
+                else
+                {
+                    throw new Exception("Both user and his privacy settings haven't been found");
+                }
+            }
+        }
+
         public async Task ChangePrivacySettings(Guid userId, ChangePrivacySettingsModel model)
         {
             var settings = await _context.PrivacySettings.Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == userId);

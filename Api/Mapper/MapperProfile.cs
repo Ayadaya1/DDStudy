@@ -57,6 +57,11 @@ namespace Api.Mapper
                 .ForMember(d => d.Author, m => m.MapFrom(s => s.User))
                 .ForMember(d=>d.Likes,m=>m.MapFrom(s=>s.Likes.Count));
 
+            CreateMap<PrivacySettings, ChangePrivacySettingsModel>()
+                .ForMember(d=>d.MessageAccess, m=>m.MapFrom(s=>s.MessageAccess))
+                .ForMember(d=>d.CommentAccess, m=>m.MapFrom(s=>s.CommentAccess))
+                .ForMember(d=>d.PostAccess, m=>m.MapFrom(s=>s.PostAccess))
+                .ForMember(d=>d.AvatarAccess, m=>m.MapFrom(s=>s.AvatarAccess));
 
         }
     }

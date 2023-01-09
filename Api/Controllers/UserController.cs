@@ -54,10 +54,10 @@ namespace Api.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task ChangePassword(ChangePasswordModel model) //Прекрасно понимаю, что метод немного корявый, написал на скорую руку эксперимента ради и чтобы чуть лучше разобраться...
+        public async Task ChangePassword(String newPassword) //Прекрасно понимаю, что метод немного корявый, написал на скорую руку эксперимента ради и чтобы чуть лучше разобраться...
         {
             var user = await GetCurrentUser();
-            await _userService.ChangePassword(model.NewPassword, user);
+            await _userService.ChangePassword(newPassword, user);
         }
 
         [HttpPost]
@@ -115,13 +115,13 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task SubscribeToUser(SubscriptionModel model)
+        public async Task SubscribeToUser(Guid targetId)
         {
             var userId = GetCurrentUserId();
-            if(userId == model.TargetId)
+            if(userId == targetId)
                 throw new Exception("Can't subscribe to yourself");
 
-            await _userService.Subscribe(userId, model.TargetId);   
+            await _userService.Subscribe(userId, targetId);   
         }
 
 
@@ -131,11 +131,11 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<List<UserModel>> GetSubscriptions() => await _userService.GetSubs(GetCurrentUserId());
+        public async Task<List<UserModel>> GetSubscriptions(Guid userId) => await _userService.GetSubs(userId);
 
         [Authorize]
         [HttpGet]
-        public async Task<List<UserModel>> GetSubscribers() => await _userService.GetSubbers(GetCurrentUserId());
+        public async Task<List<UserModel>> GetSubscribers(Guid userId) => await _userService.GetSubbers(userId);
 
 
         [Authorize]
@@ -167,6 +167,10 @@ namespace Api.Controllers
         [Authorize]
         [HttpPost]
         public async Task ChangePrivacySettings(ChangePrivacySettingsModel model) => await _userService.ChangePrivacySettings(GetCurrentUserId(), model);
+
+        [Authorize]
+        [HttpGet]
+        public async Task<ChangePrivacySettingsModel> GetPrivacySettings() => await _userService.GetPrivacySettings(GetCurrentUserId());
 
         [Authorize]
         [HttpPost]

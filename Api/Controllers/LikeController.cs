@@ -69,5 +69,9 @@ namespace Api.Controllers
 
         [HttpGet]
         public async Task<List<UserModel>> GetThoseWhoLikedContent(string contentType, Guid contentId) => await _likeService.GetThoseWhoLiked(contentType, contentId);
+
+        [Authorize]
+        [HttpPost]
+        public async Task<bool> CheckLike(LikeModel model) => await _likeService.CheckLike(model, GetCurrentUserId());
     }
 }

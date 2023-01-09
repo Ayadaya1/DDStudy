@@ -1,6 +1,7 @@
 ﻿using Api.Exceptions;
 using Api.Models.Attaches;
 using Api.Models.Comments;
+using Api.Models.Likes;
 using Api.Models.Posts;
 using Api.Models.User;
 using AutoMapper;
@@ -201,6 +202,31 @@ namespace Api.Services
             }
 
             return _mapper.Map<List<UserModel>>(users);
+        }
+
+        public async Task<bool> CheckLike(LikeModel model, Guid userId)
+        {
+            switch (model.ContentType)
+            {
+                case "Post":
+                    if (await _context.PostLikes.FirstOrDefaultAsync(x => x.PostId == model.ContentId && x.UserId == userId) != null)
+                        return true;
+                    break;
+
+                case "Avatar":
+                    if (await _context.AvatarLikes.FirstOrDefaultAsync(x => x.AvatarId == model.ContentId && x.UserId == userId) != null)
+                        return true;
+                    break;
+
+                case "Comment":
+                    if (await _context.CommentLikes.FirstOrDefaultAsync(x => x.CommentId == model.ContentId && x.UserId == userId) != null)
+                        return true;
+                    break;
+
+                default:
+                    throw new InvalidContentTypeException();
+            }
+            return false;
         }
     }
 }

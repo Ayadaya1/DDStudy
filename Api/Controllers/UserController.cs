@@ -172,7 +172,8 @@ namespace Api.Controllers
         [HttpPost]
         public async Task UnsubscribeFromUser(Guid targetId) => await _userService.Unsubscribe(GetCurrentUserId(), targetId);
 
-
+        [HttpGet]
+        public async Task<UserModel> GetUserById(Guid userId) => await _userService.GetUser(userId);
     }
 
 }

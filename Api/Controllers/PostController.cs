@@ -120,10 +120,10 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task AddCommentToPost(Guid postId, CommentInputModel model)
+        public async Task AddCommentToPost(Guid postId, String comment)
         {
             var userId = GetCurrentUserId();
-                await _postService.AddComment(model, userId, postId);
+                await _postService.AddComment(comment, userId, postId);
         }
 
         [HttpGet]
@@ -141,9 +141,9 @@ namespace Api.Controllers
                 throw new Exception("You are not authorized");
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet]
-        public async Task<List<PostModel>> GetTopPosts(int take, int skip)=> await _postService.GetTopPosts(take, skip);
+        public async Task<List<PostModel>> GetTopPosts(int take, int skip)=> await _postService.GetTopPosts(take, skip, GetCurrentUserId());
 
         [Authorize]
         [HttpGet]

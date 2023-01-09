@@ -7,6 +7,7 @@ using Api.Models.Attaches;
 using Api.Models.Comments;
 using Common.Enums;
 using Api.Exceptions;
+using Microsoft.Extensions.Hosting;
 
 namespace Api.Services
 {
@@ -88,7 +89,7 @@ namespace Api.Services
             return _mapper.Map<AttachModel>(attach);
         }
 
-        public async Task AddComment(CommentInputModel model, Guid userId, Guid postId)
+        public async Task AddComment(String text, Guid userId, Guid postId)
         {
             var post = await _context.Posts.Include(x => x.Comments).ThenInclude(x => x.User).ThenInclude(x=>x.Subscribers).Include(x=>x.User).ThenInclude(x=>x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == postId);
             var user = await _context.Users.Include(x=>x.PrivacySettings).FirstOrDefaultAsync(x => x.Id == userId);
@@ -102,7 +103,7 @@ namespace Api.Services
             }
             var comment = new Comment
             {
-                Text = model.Text,
+                Text = text,
                 Created = DateTime.UtcNow,
                 Id = Guid.NewGuid(),
                 User = user,
@@ -141,17 +142,30 @@ namespace Api.Services
                 throw new Exception("You should be subsribed to see this");
         }
 
-        public async Task<List<PostModel>> GetTopPosts(int take, int skip)
+        public async Task<List<PostModel>> GetTopPosts(int take, int skip, Guid userId)
         {
-            var posts = await _context.Posts.Include(x=>x.Likes)
-                .Include(x=>x.Attaches)
-                .Include(x=>x.User).ThenInclude(x=>x.PrivacySettings)
-                .Include(x=>x.User).ThenInclude(x=>x.Subscribers)
+            var posts = await _context.Posts.Include(x => x.Likes)
+                .Include(x => x.Attaches)
+                .Include(x => x.User).ThenInclude(x => x.PrivacySettings)
+                .Include(x => x.User).ThenInclude(x => x.Subscribers)
                 .Include(x => x.User).ThenInclude(x => x.Subscriptions)
                 .Include(x => x.User).ThenInclude(x => x.Avatar)
-                .Where(x=>x.User.PrivacySettings.PostAccess==Privacy.Everybody)
+                .Include(x=>x.Comments)
                 .OrderByDescending(x => x.Likes.Count).Skip(skip).Take(take).ToListAsync();
-            return _mapper.Map<List<PostModel>>(posts);
+
+            var result = new List<PostModel>();
+
+            foreach (var post in posts)
+            {
+                var isSubscribed = await _userService.CheckSubscription(userId, post.User.Id);
+
+                if (post.User.PrivacySettings.PostAccess == Privacy.Everybody || isSubscribed)
+                {
+                    result.Add(_mapper.Map<PostModel>(post));
+                }
+            }
+
+            return result;
         }
 
         public async Task<List<PostModel>> GetPostsOfThoseYoureSubscribedTo(int take, int skip, Guid userId)

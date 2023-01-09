@@ -142,6 +142,18 @@ namespace Api.Services
                 throw new Exception("You should be subsribed to see this");
         }
 
+        public async Task<CommentOutputModel> GetCommentById(Guid commentId)
+        {
+            var comment =  await _context.Comments
+                .Include(x => x.User).ThenInclude(x => x.Avatar)
+                .Include(x => x.User).ThenInclude(x => x.Subscribers)
+                .Include(x => x.User).ThenInclude(x => x.Subscriptions)
+                .Include(x => x.Likes).FirstOrDefaultAsync(x=>x.Id == commentId);
+            if (comment == null)
+                throw new CommentNotFoundException();
+            return _mapper.Map<CommentOutputModel>(comment);
+        }
+
         public async Task<List<PostModel>> GetTopPosts(int take, int skip, Guid userId)
         {
             var posts = await _context.Posts.Include(x => x.Likes)

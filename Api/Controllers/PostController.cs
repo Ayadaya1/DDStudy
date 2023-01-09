@@ -159,6 +159,10 @@ namespace Api.Controllers
             return userId;
 
         }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<CommentOutputModel> GetCommentById(Guid commentId) => await _postService.GetCommentById(commentId);
     }
 
 }

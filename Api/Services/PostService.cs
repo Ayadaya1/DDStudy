@@ -206,6 +206,18 @@ namespace Api.Services
             return _mapper.Map<List<PostModel>>(posts);
         }
 
+        public async Task<List<PostModel>> GetUsersPosts(int take, int skip, Guid userId)
+        {
+            var posts = await _context.Posts.Include(x => x.Likes)
+                .Include(x => x.Attaches)
+                .Include(x => x.User).ThenInclude(x => x.Subscribers).ThenInclude(x => x.Subscriber)
+                .Include(x => x.User).ThenInclude(x => x.Subscriptions)
+                .Include(x => x.User).ThenInclude(x => x.Avatar)
+                .OrderByDescending(x => x.Created).Skip(skip).Take(take).Where(x => x.User.Id == userId).ToListAsync();
+
+            return _mapper.Map<List<PostModel>>(posts);
+        }
+
     
     }
 }

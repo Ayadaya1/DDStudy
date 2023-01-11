@@ -163,6 +163,10 @@ namespace Api.Controllers
         [Authorize]
         [HttpGet]
         public async Task<CommentOutputModel> GetCommentById(Guid commentId) => await _postService.GetCommentById(commentId);
+
+        [Authorize]
+        [HttpGet]
+        public async Task<List<PostModel>> GetUsersPost(int take, int skip, Guid userId) => await _postService.GetUsersPosts(take, skip, userId);
     }
 
 }
